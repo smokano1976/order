@@ -308,7 +308,7 @@
   7. <b>到期日校驗</b>：到期日A + 到期日B 的數量需等於現場實盤（格式：日期*數量）。<br>
   8. <b>異常原因強制填寫</b>：庫存有落差時，請務必填寫備註原因。<br>
   9. <b>庫存接軌</b>：儲存成功後，今日現場實盤會自動變為明日的昨日庫存並鎖定。
-  <div class="help-version">版本：04282140　更新日期：2025/04/28</div>
+  <div class="help-version">版本：06061309　更新日期：2026/06/06</div>
 </div>
 
 <!-- 使用者資訊 -->
@@ -386,11 +386,12 @@
 const API_URL = "https://script.google.com/macros/s/AKfycby-ZvkQ60TqtgXP_EmEiVmgkMO5t7qaXS6PGenEV1t0-P88cqZ88R_PT0Q8Qu2bh9J5/exec";
 
 const products = [
-  { name: "厚切",          weekday: 180, holiday: 200, active: true  },
-  { name: "金沙",          weekday: 180, holiday: 200, active: true  },
+  { name: "厚切火腿",          weekday: 180, holiday: 200, active: true  },
+  { name: "金沙肉鬆",          weekday: 180, holiday: 200, active: true  },
   { name: "草莓優格",      weekday: 70,  holiday: 85,  active: false },
-  { name: "芋泥",          weekday: 80,  holiday: 95,  active: true  },
+  { name: "芋泥",          weekday: 80,  holiday: 95,  active: false  },
   { name: "草莓吐司",      weekday: 70,  holiday: 85,  active: false },
+  { name: "火腿開心果",     weekday: 180, holiday: 200, active: true  },
   { name: "豬肉鬆",        weekday: 10,  holiday: 10,  active: true  },
   { name: "芝麻海苔肉鬆",  weekday: 5,   holiday: 5,   active: true  },
   { name: "寶寶肉鬆",      weekday: 5,   holiday: 5,   active: true  },
