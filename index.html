@@ -301,14 +301,14 @@
   <strong>💡 使用說明</strong><br>
   1. <b>自動判斷</b>：依明日日期設定目標基準（五六日為假日模式）。<br>
   2. <b>強制模式</b>：若遇到補班日、特殊連假，請手動按鈕切換平假日標準。<br>
-  3. <b>理論庫存</b>：自動計算「昨 + 到 - 銷 - 廢 - 試」。<br>
+  3. <b>理論庫存</b>：自動計算「昨 + 到 - 銷 - 廢 - 試 - 員餐 - 贈送」。<br>
   4. <b>叫貨勾選</b>：取消勾選代表今日不叫貨，系統自動將最終叫貨量歸 0，但仍需正常填寫庫存資料。<br>
   5. <b>備註與預訂</b>：備註可輸入「請包裝3盒6入厚切」或「2盒厚切+金沙各三入」，須手動計算數量並加入最終叫貨量。<br>
   6. <b>最終叫貨量</b>：黃色格可調整叫貨量，若有預訂請手動累加總顆數，不需補貨請手動改為 0。<br>
-  7. <b>到期日校驗</b>：到期日A + 到期日B 的數量需等於現場實盤（格式：日期*數量）。<br>
+  7. <b>到期日校驗</b>：到期日A+B+C+D 的數量需等於現場實盤（格式：日期*數量）。<br>
   8. <b>異常原因強制填寫</b>：庫存有落差時，請務必填寫備註原因。<br>
   9. <b>庫存接軌</b>：儲存成功後，今日現場實盤會自動變為明日的昨日庫存並鎖定。
-  <div class="help-version">版本：06061309　更新日期：2026/06/06</div>
+  <div class="help-version">版本：06091000　更新日期：2026/06/09</div>
 </div>
 
 <!-- 使用者資訊 -->
@@ -351,7 +351,9 @@
         <th>今日銷售<span class="sub">不含廢/試</span></th>
         <th>報廢<span class="sub">損耗數量</span></th>
         <th>試吃<span class="sub">公關/試吃</span></th>
-        <th>理論庫存<span class="sub">昨+到-銷-廢-試</span></th>
+        <th>員餐<span class="sub">員工餐食</span></th>
+        <th>贈送<span class="sub">贈品扣除</span></th>
+        <th>理論庫存<span class="sub">昨+到-銷-廢-試-員-贈</span></th>
         <th>現場實盤<span class="sub">藍色欄位</span></th>
         <th>差異<span class="sub">實-理</span></th>
         <th>建議叫貨<span class="sub">標準-實盤</span></th>
@@ -359,6 +361,8 @@
         <th style="min-width:85px;">備註<span class="sub note-required-label">差異≠0 必填</span></th>
         <th style="width:95px;">到期日A<span class="sub">日期*顆數</span></th>
         <th style="width:95px;">到期日B<span class="sub">日期*顆數</span></th>
+        <th style="width:95px;">到期日C<span class="sub">日期*顆數</span></th>
+        <th style="width:95px;">到期日D<span class="sub">日期*顆數</span></th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -393,7 +397,7 @@ const products = [
   { name: "草莓吐司",      weekday: 70,  holiday: 85,  active: false },
   { name: "火腿開心果",     weekday: 100, holiday: 120, active: true  },
   { name: "豬肉鬆",        weekday: 10,  holiday: 10,  active: true  },
-  { name: "芝麻海苔肉鬆",  weekday: 5,   holiday: 5,   active: true  },
+  { name: "海苔芝麻肉鬆",  weekday: 5,   holiday: 5,   active: true  },
   { name: "寶寶肉鬆",      weekday: 5,   holiday: 5,   active: true  },
   { name: "150g肉乾",      weekday: 5,   holiday: 5,   active: true  },
   { name: "150g肉條",      weekday: 5,   holiday: 5,   active: true  },
@@ -441,6 +445,10 @@ function initTable() {
           onfocus="clearZero(this)" onblur="restoreZero(this)" oninput="calculate()"></td>
       <td><input type="number" id="tast${i}" class="num-in" value="0"
           onfocus="clearZero(this)" onblur="restoreZero(this)" oninput="calculate()"></td>
+      <td><input type="number" id="meal${i}" class="num-in" value="0"
+          onfocus="clearZero(this)" onblur="restoreZero(this)" oninput="calculate()"></td>
+      <td><input type="number" id="gift${i}" class="num-in" value="0"
+          onfocus="clearZero(this)" onblur="restoreZero(this)" oninput="calculate()"></td>
       <td id="theory${i}" class="theory-val">0</td>
       <td><input type="number" id="act${i}" class="num-in in-actual" value="0"
           onfocus="clearZero(this)" onblur="restoreZero(this)" oninput="calculate()"></td>
@@ -452,6 +460,8 @@ function initTable() {
           oninput="this.classList.remove('required-error')"></td>
       <td><input type="text" id="batch1_${i}" class="txt-batch" placeholder="5/1*20"></td>
       <td><input type="text" id="batch2_${i}" class="txt-batch" placeholder="5/3*10"></td>
+      <td><input type="text" id="batch3_${i}" class="txt-batch" placeholder="5/5*5"></td>
+      <td><input type="text" id="batch4_${i}" class="txt-batch" placeholder="5/7*5"></td>
     `;
     tbody.appendChild(row);
   });
@@ -482,9 +492,11 @@ function calculate(forceAll = false) {
     const sale = +document.getElementById("sale"+i).value;
     const w    = +document.getElementById("waste"+i).value;
     const t    = +document.getElementById("tast"+i).value;
+    const meal = +document.getElementById("meal"+i).value;
+    const gift = +document.getElementById("gift"+i).value;
     const act  = +document.getElementById("act"+i).value;
 
-    const theory  = y + inc - sale - w - t;
+    const theory  = y + inc - sale - w - t - meal - gift;
     const diff    = act - theory;
     const suggest = isS ? Math.max(0, safety(p) - act) : 0;
 
@@ -550,6 +562,8 @@ async function prepareSave() {
     const noteEl = document.getElementById("note"+i);
     const b1 = document.getElementById("batch1_"+i).value.trim();
     const b2 = document.getElementById("batch2_"+i).value.trim();
+    const b3 = document.getElementById("batch3_"+i).value.trim();
+    const b4 = document.getElementById("batch4_"+i).value.trim();
     const isS = document.getElementById(`supply${i}`).checked;
 
     if (diffN !== 0 && noteEl.value.trim() === "") {
@@ -557,7 +571,7 @@ async function prepareSave() {
       validationError = true;
     }
 
-    const bTotal = extractQty(b1) + extractQty(b2);
+    const bTotal = extractQty(b1) + extractQty(b2) + extractQty(b3) + extractQty(b4);
     if (act > 0 && bTotal !== act) {
       batchError = true;
       batchMsg += `${p.name}：到期日總數(${bTotal}) ≠ 實盤數(${act})\n`;
@@ -575,8 +589,10 @@ async function prepareSave() {
       act,
       waste: +document.getElementById("waste"+i).value,
       tast:  +document.getElementById("tast"+i).value,
+      meal:  +document.getElementById("meal"+i).value,
+      gift:  +document.getElementById("gift"+i).value,
       diff:  diffN,
-      b1, b2,
+      b1, b2, b3, b4,
       note: noteEl.value
     });
   });
@@ -715,10 +731,12 @@ function renderHistory() {
           <div class="detail-item">
             <div class="item-name">${d.name || '—'} <b style="color:#1E88E5">${d.qty ?? 0}</b></div>
             <div style="color:#1a1a1a">實盤：${d.act ?? 0}</div>
-            <div style="color:#E53935">廢：${d.waste ?? 0}　試：${d.tast ?? 0}</div>
+            <div style="color:#E53935">廢：${d.waste ?? 0}　試：${d.tast ?? 0}${(d.meal ?? 0) ? `　員餐：${d.meal}` : ''}${(d.gift ?? 0) ? `　贈：${d.gift}` : ''}</div>
             ${d.diff !== undefined && d.diff !== 0 ? `<div style="color:#993C1D">差異：${d.diff > 0 ? '+' : ''}${d.diff}</div>` : ''}
             ${d.b1 ? `<div style="color:#555">到期A：${d.b1}</div>` : ''}
             ${d.b2 ? `<div style="color:#555">到期B：${d.b2}</div>` : ''}
+            ${d.b3 ? `<div style="color:#555">到期C：${d.b3}</div>` : ''}
+            ${d.b4 ? `<div style="color:#555">到期D：${d.b4}</div>` : ''}
             ${d.note ? `<div style="color:#185FA5;font-style:italic">${d.note}</div>` : ''}
           </div>`).join('')
       : '<div style="color:#bbb; font-size:12px; padding:8px;">此筆無品項明細</div>';
